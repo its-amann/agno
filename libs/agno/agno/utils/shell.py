@@ -21,10 +21,14 @@ def decode_subprocess_output(data: bytes) -> str:
         return data.decode("utf-8")
     except UnicodeDecodeError:
         pass
+    text = data.decode("utf-8", errors="replace")
+    if any(ord(ch) > 127 and ch != "\ufffd" for ch in text):
+        # mostly UTF-8 with a few bad bytes, keep the good characters instead of rereading it all as the locale
+        return text
     try:
         return data.decode(locale.getpreferredencoding(False))
     except (UnicodeDecodeError, LookupError):
-        return data.decode("utf-8", errors="replace")
+        return text
 
 
 def run_shell_command(args: List[str], tail: int = 100) -> str:
